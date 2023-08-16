@@ -1,7 +1,5 @@
-import pm4py
-from pm4py.algo.filtering.log.variants import variants_filter
+import pm4py as pm
 import pandas as pd
-from datetime import datetime, timedelta
 
 def get_number_cases(log):
     num_cases = log['case:concept:name'].nunique()
@@ -13,7 +11,7 @@ def get_activity_count(log):
     return activity_counts
 
 def get_durations_cases(log):
-    all_case_durations = pm4py.get_all_case_durations(log)
+    all_case_durations = pm.get_all_case_durations(log)
     return all_case_durations
 
 def get_total_duration(log):
@@ -45,7 +43,7 @@ def get_cost_by_resource(log):
 
 def get_avg_arrival_time(log):
     # It works only for the case of a BPMN with a single starting event
-    start_activity = pm4py.get_start_activities(log, activity_key='concept:name', case_id_key='case:concept:name', timestamp_key='time:timestamp')  
+    start_activity = pm.get_start_activities(log, activity_key='concept:name', case_id_key='case:concept:name', timestamp_key='time:timestamp')  
     start_activity = next(iter(start_activity))
     cases_starts = log[log['concept:name'] == start_activity]
     cases_starts = cases_starts[cases_starts['lifecycle:transition'] == "assign"]
@@ -129,12 +127,12 @@ def getResourceCalendar(log):
 
 def discover_xor_probabilities(log):
     log = log[log['lifecycle:transition'] == 'complete']
-    discovered_bpmn = pm4py.discover_bpmn_inductive(log)
-    #pm4py.view_bpmn(discovered_bpmn)
+    discovered_bpmn = pm.discover_bpmn_inductive(log)
+    #pm.view_bpmn(discovered_bpmn)
     xor_probabilities = {}
     
     for node in discovered_bpmn.get_nodes():
-        if isinstance(node, pm4py.objects.bpmn.obj.BPMN.ExclusiveGateway) and (node.get_gateway_direction() == pm4py.objects.bpmn.obj.BPMN.Gateway.Direction.DIVERGING):
+        if isinstance(node, pm.objects.bpmn.obj.BPMN.ExclusiveGateway) and (node.get_gateway_direction() == pm.objects.bpmn.obj.BPMN.Gateway.Direction.DIVERGING):
             #print(node.get_out_arcs())
             #print(node.get_gateway_direction())
             outgoing_arcs = node.get_out_arcs()
@@ -164,8 +162,8 @@ def showResultsTerminal(log):
     resources = get_resources(log)
     print(f"Count for Activities: {activities}")
     print(f"Resources: {resources}")
-    #start_activity = pm4py.get_start_activities(log, activity_key='concept:name', case_id_key='case:concept:name', timestamp_key='time:timestamp')
-    #end_activitiy = pm4py.get_end_activities(log, activity_key='concept:name', case_id_key='case:concept:name', timestamp_key='time:timestamp')
+    #start_activity = pm.get_start_activities(log, activity_key='concept:name', case_id_key='case:concept:name', timestamp_key='time:timestamp')
+    #end_activitiy = pm.get_end_activities(log, activity_key='concept:name', case_id_key='case:concept:name', timestamp_key='time:timestamp')
 
     duration = get_total_duration(log)
     print(f"Total process duration: {duration}")
@@ -223,7 +221,7 @@ def write_output_file(log):
         print(f"XOR Split Probabilities:\n {discover_xor_probabilities(log)}", file=output_file)
 
 if __name__ == "__main__":
-    log = pm4py.read_xes('Logs/test_23-06-23/test_23-06-23.xes')    # Read the event log in a pandas dataframe
+    log = pm.read_xes('Logs/test_23-06-23/test_23-06-23.xes')    # Read the event log in a pandas dataframe
 
     showResultsTerminal(log)
     #write_output_file(log)

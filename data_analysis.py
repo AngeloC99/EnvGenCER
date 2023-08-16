@@ -155,70 +155,50 @@ def discover_xor_probabilities(log):
     return xor_probabilities
 
 def showResultsTerminal(log):
-    num_cases = get_number_cases(log)
-    print(f"Number of Processed Instances: {num_cases}")
- 
-    activities = get_activity_count(log)
-    resources = get_resources(log)
-    print(f"Count for Activities: {activities}")
-    print(f"Resources: {resources}")
-    #start_activity = pm.get_start_activities(log, activity_key='concept:name', case_id_key='case:concept:name', timestamp_key='time:timestamp')
-    #end_activitiy = pm.get_end_activities(log, activity_key='concept:name', case_id_key='case:concept:name', timestamp_key='time:timestamp')
+    output_lines = []
 
-    duration = get_total_duration(log)
-    print(f"Total process duration: {duration}")
+    statistics = [
+        ("Number of Processed Instances", get_number_cases(log)),
+        ("Count for Activities", get_activity_count(log)),
+        ("Resources", get_resources(log)),
+        ("Total process duration", get_total_duration(log)),
+        ("Cost by Activity", get_cost_by_activity(log)),
+        ("Cost by Resources", get_cost_by_resource(log)),
+        ("Average Arrival Time between Cases", f"{get_avg_arrival_time(log)} s"),
+        ("Processing Times", get_processing_times(log)),
+        ("Waiting Times", get_waiting_times(log)),
+        ("Resources Calendar", getResourceCalendar(log)),
+        ("XOR Split Probabilities", discover_xor_probabilities(log))
+    ]
 
-
-    cost_by_activity = get_cost_by_activity(log)
-    print(f"Cost by Activity: {cost_by_activity}")
-
-    resource_costs = get_cost_by_resource(log)
-    print(f"Cost by Resources: {resource_costs}")
-
-    case_arrival_ratio = get_avg_arrival_time(log)
-    print(f"Average Arrival Time between Cases: {case_arrival_ratio} s")
-
-    processingTimes = get_processing_times(log)
-    print(f"Processing Times:\n {processingTimes}")
+    for stat_name, stat_value in statistics:
+        output_lines.append(f"{stat_name}: {stat_value}")
     
-    waitingTimes = get_waiting_times(log)
-    print(f"Waiting Times:\n {waitingTimes}")
-    
-    print(f"Resources Calendar:\n {getResourceCalendar(log)}")
+    print('\n'.join(output_lines))
 
-    print(f"XOR Split Probabilities:\n {discover_xor_probabilities(log)}")
 
 def write_output_file(log):
+    output_lines = []
+
+    statistics = [
+        ("Number of Processed Instances", get_number_cases(log)),
+        ("Count for Activities", get_activity_count(log)),
+        ("Resources", get_resources(log)),
+        ("Total process duration", get_total_duration(log)),
+        ("Cost by Activity", get_cost_by_activity(log)),
+        ("Cost by Resources", get_cost_by_resource(log)),
+        ("Average Arrival Time between Cases", f"{get_avg_arrival_time(log)} s"),
+        ("Processing Times", get_processing_times(log)),
+        ("Waiting Times", get_waiting_times(log)),
+        ("Resources Calendar", getResourceCalendar(log)),
+        ("XOR Split Probabilities", discover_xor_probabilities(log))
+    ]
+
     with open('output.txt', 'w', newline='') as output_file:
-        num_cases = get_number_cases(log)
-        print(f"Number of Processed Instances: {num_cases}", file=output_file)
-
-        activities = get_activity_count(log)
-        resources = get_resources(log)
-        print(f"Count for Activities: {activities}", file=output_file)
-        print(f"Resources: {resources}", file=output_file)
-
-        duration = get_total_duration(log)
-        print(f"Total process duration: {duration}", file=output_file)
-
-        cost_by_activity = get_cost_by_activity(log)
-        print(f"Cost by Activity: {cost_by_activity}", file=output_file)
-
-        resource_costs = get_cost_by_resource(log)
-        print(f"Cost by Resources: {resource_costs}", file=output_file)
-
-        case_arrival_ratio = get_avg_arrival_time(log)
-        print(f"Average Arrival Time between Cases: {case_arrival_ratio} s", file=output_file)
-
-        processingTimes = get_processing_times(log)
-        print(f"Processing Times:\n {processingTimes}", file=output_file)
-
-        waitingTimes = get_waiting_times(log)
-        print(f"Waiting Times:\n {waitingTimes}", file=output_file)
-
-        print(f"Resources Calendar:\n {getResourceCalendar(log)}", file=output_file)
-
-        print(f"XOR Split Probabilities:\n {discover_xor_probabilities(log)}", file=output_file)
+        for stat_name, stat_value in statistics:
+            output_lines.append(f"{stat_name}: {stat_value}")
+        
+        output_file.write('\n'.join(output_lines))
 
 if __name__ == "__main__":
     log = pm.read_xes('Logs/test_23-06-23/test_23-06-23.xes')    # Read the event log in a pandas dataframe

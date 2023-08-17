@@ -1,3 +1,4 @@
+import sys
 import pm4py as pm
 import pandas as pd
 
@@ -201,7 +202,9 @@ def write_output_file(log):
         output_file.write('\n'.join(output_lines))
 
 if __name__ == "__main__":
-    log = pm.read_xes('Logs/test_23-06-23/test_23-06-23.xes')    # Read the event log in a pandas dataframe
+    log_path = sys.argv[1] 
+    #log = pm.read_xes('Logs/test_23-06-23/test_23-06-23.xes')    # Read the event log in a pandas dataframe
+    log = pm.read_xes(log_path)    # Read the event log in a pandas dataframe
 
     showResultsTerminal(log)
     #write_output_file(log)

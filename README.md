@@ -1,5 +1,5 @@
-# DataAnalysis
-Script for the Data Analysis step of the CER's Big Data pipeline.
+# CER Environment Generation
+Script for the Environment Generation step of the CER's Big Data pipeline.
 This work is part of my MSc thesis.
 
 ## About The Project
@@ -14,7 +14,7 @@ To run the project, the requirements are the following:
 - [PM4Py](https://pm4py.fit.fraunhofer.de/) (>= v.2.7.5)
 
 ## Running The Project
-Go in the DataAnalysis directory and run the following command by specifying the path of the input event log:
+Go in the EnvGenCER directory and run the following command by specifying the path of the input event log:
 ```bash
-python3 data_analysis.py "<input_directory_path>"
+python3 data_analysis.py "<input_log_path>"
 ```

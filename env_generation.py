@@ -1,6 +1,6 @@
-import sys
 import pm4py as pm
 import pandas as pd
+import sys
 
 def get_number_cases(log):
     num_cases = log['case:concept:name'].nunique()
@@ -25,21 +25,23 @@ def get_total_duration(log):
     return duration
 
 def get_resources(log):
-    resources = log["org:resource"].dropna().unique()
+    resources = log['org:resource'].dropna().unique()
     return resources
 
 def get_cost_by_activity(log):
     # This give the total cost for every activity. For the avg, divide it for the number of traces with this activity
-    # Group by "concept:name" and sum the "resourceCost"
-    log["resourceCost"] = pd.to_numeric(log["resourceCost"], errors="coerce")
-    cost_by_activity = round(log.groupby("concept:name")["resourceCost"].sum(),2)
+    # Group by 'concept:name' and sum the 'resourceCost'
+    log['resourceCost'] = pd.to_numeric(log['resourceCost'], errors='coerce')
+    cost_by_activity = round(log.groupby('concept:name')['resourceCost'].sum(),2)
 
-    # Filter out rows with missing or NaN "resourceCost", if needed
+    # Filter out rows with missing or NaN 'resourceCost', if needed
     cost_by_activity = cost_by_activity.dropna()
     return(cost_by_activity)
 
 def get_cost_by_resource(log):
+    log['resourceCost'] = pd.to_numeric(log['resourceCost'], errors='coerce')
     resource_costs = round(log.groupby('org:resource')['resourceCost'].sum(),2)
+    resource_costs = resource_costs.dropna()
     return resource_costs
 
 def get_avg_arrival_time(log):
@@ -47,7 +49,7 @@ def get_avg_arrival_time(log):
     start_activity = pm.get_start_activities(log, activity_key='concept:name', case_id_key='case:concept:name', timestamp_key='time:timestamp')  
     start_activity = next(iter(start_activity))
     cases_starts = log[log['concept:name'] == start_activity]
-    cases_starts = cases_starts[cases_starts['lifecycle:transition'] == "assign"]
+    cases_starts = cases_starts[cases_starts['lifecycle:transition'] == 'assign']
     cases_starts.sort_values('time:timestamp', inplace=True)
     
     cases_starts['date'] = cases_starts['time:timestamp'].dt.date
@@ -64,7 +66,7 @@ def get_avg_arrival_time(log):
     return round(overall_average_interarrival_time, 2)
 
 def get_processing_times(log):
-    log['time:timestamp'] = pd.to_datetime(log['time:timestamp'], format="%Y-%m-%dT%H:%M:%S.%f%z")
+    log['time:timestamp'] = pd.to_datetime(log['time:timestamp'], format='%Y-%m-%dT%H:%M:%S.%f%z')
 
     # Filter rows with lifecycle:transition 'start' or 'complete'
     start_rows = log[log['lifecycle:transition'] == 'start']
@@ -80,16 +82,16 @@ def get_processing_times(log):
         complete_group = complete_groups.get_group(name)
         start_times = start_group['time:timestamp'].reset_index(drop=True)
         complete_times = complete_group['time:timestamp'].reset_index(drop=True)
-        #print(f"Start Times for '{name}':\n{start_times}\n")
-        #print(f"Complete Times for '{name}':\n{complete_times}\n")
-        #print(f"Difference Times for '{name}':\n{(complete_times - start_times)}\nMEAN: {(complete_times - start_times).dt.total_seconds().mean()}\nMEDIAN: {(complete_times - start_times).dt.total_seconds().median()}\n")
+        #print(f'Start Times for '{name}':\n{start_times}\n')
+        #print(f'Complete Times for '{name}':\n{complete_times}\n')
+        #print(f'Difference Times for '{name}':\n{(complete_times - start_times)}\nMEAN: {(complete_times - start_times).dt.total_seconds().mean()}\nMEDIAN: {(complete_times - start_times).dt.total_seconds().median()}\n')
         processing_time = (complete_times - start_times).median()
         processing_times[name] = processing_time.total_seconds()
 
     return processing_times
 
 def get_waiting_times(log):
-    log['time:timestamp'] = pd.to_datetime(log['time:timestamp'], format="%Y-%m-%dT%H:%M:%S.%f%z")
+    log['time:timestamp'] = pd.to_datetime(log['time:timestamp'], format='%Y-%m-%dT%H:%M:%S.%f%z')
 
     # Filter rows with lifecycle:transition 'start' or 'complete'
     assign_rows = log[log['lifecycle:transition'] == 'assign']
@@ -105,8 +107,8 @@ def get_waiting_times(log):
         start_group = start_groups.get_group(name)
         assign_times = assign_group['time:timestamp'].reset_index(drop=True)
         start_times = start_group['time:timestamp'].reset_index(drop=True)
-        #print(f"assign Times for '{name}':\n{assign_times}\n")
-        #print(f"start Times for '{name}':\n{start_times}\n")
+        #print(f'assign Times for '{name}':\n{assign_times}\n')
+        #print(f'start Times for '{name}':\n{start_times}\n')
         waiting_time = (start_times - assign_times).median()
         waiting_times[name] = waiting_time.total_seconds()
 
@@ -117,14 +119,13 @@ def getResourceCalendar(log):
     log['time:timestamp'] = pd.to_datetime(log['time:timestamp'])
 
     log['org:resource'] = log['org:resource'].str.split('-').str[0]
-    log['dayname'] = log['time:timestamp'].dt.day_name()
     log['weekday'] = log['time:timestamp'].dt.weekday
-    log['time'] = log['time:timestamp']
-    min_times = log.groupby(['org:resource', log['time:timestamp'].dt.weekday])['time'].min().dt.round('30min').dt.time
-    max_times = log.groupby(['org:resource', log['time:timestamp'].dt.weekday])['time'].max().dt.round('30min').dt.time
-
+    log['dayname'] = log['time:timestamp'].dt.day_name()
+    min_times = log.groupby(['org:resource', log['weekday'], log['dayname']])['time:timestamp'].min().dt.round('30min').dt.time
+    max_times = log.groupby(['org:resource', log['weekday'], log['dayname']])['time:timestamp'].max().dt.round('30min').dt.time
     resourceTimes = pd.DataFrame({'min_time': min_times, 'max_time': max_times})
-    return resourceTimes    # TAKE FROM THIS ONLY THE MIN AND MAX OF THE DAYS AND RETURN IN THE OUTPUT THE DAYS IN WHICH THE RESOURCE WORKS WITH MIN AND MAX HOURS
+    
+    return resourceTimes
 
 def discover_xor_probabilities(log):
     log = log[log['lifecycle:transition'] == 'complete']
@@ -159,49 +160,48 @@ def showResultsTerminal(log):
     output_lines = []
 
     statistics = [
-        ("Number of Processed Instances", get_number_cases(log)),
-        ("Count for Activities", get_activity_count(log)),
-        ("Resources", get_resources(log)),
-        ("Total process duration", get_total_duration(log)),
-        ("Cost by Activity", get_cost_by_activity(log)),
-        ("Cost by Resources", get_cost_by_resource(log)),
-        ("Average Arrival Time between Cases", f"{get_avg_arrival_time(log)} s"),
-        ("Processing Times", get_processing_times(log)),
-        ("Waiting Times", get_waiting_times(log)),
-        ("Resources Calendar", getResourceCalendar(log)),
-        ("XOR Split Probabilities", discover_xor_probabilities(log))
+        ('Number of Processed Instances', get_number_cases(log)),
+        ('Count for Activities', get_activity_count(log)),
+        ('Resources', get_resources(log)),
+        ('Total process duration', get_total_duration(log)),
+        ('Cost by Activity', get_cost_by_activity(log)),
+        ('Cost by Resources', get_cost_by_resource(log)),
+        ('Average Arrival Time between Cases', f'{get_avg_arrival_time(log)} s'),
+        ('Processing Times', get_processing_times(log)),
+        ('Waiting Times', get_waiting_times(log)),
+        ('Resources Calendar', getResourceCalendar(log)),
+        ('XOR Split Probabilities', discover_xor_probabilities(log))
     ]
 
     for stat_name, stat_value in statistics:
-        output_lines.append(f"{stat_name}: {stat_value}")
+        output_lines.append(f'{stat_name}: {stat_value}')
     
     print('\n'.join(output_lines))
-
 
 def write_output_file(log):
     output_lines = []
 
     statistics = [
-        ("Number of Processed Instances", get_number_cases(log)),
-        ("Count for Activities", get_activity_count(log)),
-        ("Resources", get_resources(log)),
-        ("Total process duration", get_total_duration(log)),
-        ("Cost by Activity", get_cost_by_activity(log)),
-        ("Cost by Resources", get_cost_by_resource(log)),
-        ("Average Arrival Time between Cases", f"{get_avg_arrival_time(log)} s"),
-        ("Processing Times", get_processing_times(log)),
-        ("Waiting Times", get_waiting_times(log)),
-        ("Resources Calendar", getResourceCalendar(log)),
-        ("XOR Split Probabilities", discover_xor_probabilities(log))
+        ('Number of Processed Instances', get_number_cases(log)),
+        ('Count for Activities', get_activity_count(log)),
+        ('Resources', get_resources(log)),
+        ('Total process duration', get_total_duration(log)),
+        ('Cost by Activity', get_cost_by_activity(log)),
+        ('Cost by Resources', get_cost_by_resource(log)),
+        ('Average Arrival Time between Cases', f'{get_avg_arrival_time(log)} s'),
+        ('Processing Times', get_processing_times(log)),
+        ('Waiting Times', get_waiting_times(log)),
+        ('Resources Calendar', getResourceCalendar(log)),
+        ('XOR Split Probabilities', discover_xor_probabilities(log))
     ]
 
     with open('output.txt', 'w', newline='') as output_file:
         for stat_name, stat_value in statistics:
-            output_lines.append(f"{stat_name}: {stat_value}")
+            output_lines.append(f'{stat_name}: {stat_value}')
         
         output_file.write('\n'.join(output_lines))
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     log_path = sys.argv[1] 
     #log = pm.read_xes('Logs/test_23-06-23/test_23-06-23.xes')    # Read the event log in a pandas dataframe
     log = pm.read_xes(log_path)    # Read the event log in a pandas dataframe

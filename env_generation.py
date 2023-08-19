@@ -28,21 +28,35 @@ def get_resources(log):
     resources = log['org:resource'].dropna().unique()
     return resources
 
-def get_cost_by_activity(log):
-    # This give the total cost for every activity. For the avg, divide it for the number of traces with this activity
-    # Group by 'concept:name' and sum the 'resourceCost'
-    log['resourceCost'] = pd.to_numeric(log['resourceCost'], errors='coerce')
-    cost_by_activity = round(log.groupby('concept:name')['resourceCost'].sum(),2)
+def get_total_cost_process(log):
+    if 'resourceCost' in log.columns:
+        log['resourceCost'] = log['resourceCost'].astype(float)
+        total_cost = log['resourceCost'].sum()
+        return round(total_cost,2)
+    else:
+        return 0
 
-    # Filter out rows with missing or NaN 'resourceCost', if needed
-    cost_by_activity = cost_by_activity.dropna()
-    return(cost_by_activity)
+def get_cost_by_activity(log):
+    if 'resourceCost' in log.columns:
+        # This give the total cost for every activity. For the avg, divide it for the number of traces with this activity
+        # Group by 'concept:name' and sum the 'resourceCost'
+        log['resourceCost'] = pd.to_numeric(log['resourceCost'], errors='coerce')
+        cost_by_activity = round(log.groupby('concept:name')['resourceCost'].sum(),2)
+
+        # Filter out rows with missing or NaN 'resourceCost', if needed
+        cost_by_activity = cost_by_activity.dropna()
+        return(cost_by_activity)
+    else:
+        return 0
 
 def get_cost_by_resource(log):
-    log['resourceCost'] = pd.to_numeric(log['resourceCost'], errors='coerce')
-    resource_costs = round(log.groupby('org:resource')['resourceCost'].sum(),2)
-    resource_costs = resource_costs.dropna()
-    return resource_costs
+    if 'resourceCost' in log.columns:
+        log['resourceCost'] = pd.to_numeric(log['resourceCost'], errors='coerce')
+        resource_costs = round(log.groupby('org:resource')['resourceCost'].sum(),2)
+        resource_costs = resource_costs.dropna()
+        return resource_costs
+    else:
+        return 0
 
 def get_avg_arrival_time(log):
     # It works only for the case of a BPMN with a single starting event
@@ -164,6 +178,7 @@ def showResultsTerminal(log):
         ('Count for Activities', get_activity_count(log)),
         ('Resources', get_resources(log)),
         ('Total process duration', get_total_duration(log)),
+        ('Total process cost', f'{get_total_cost_process(log)} EUR'),
         ('Cost by Activity', get_cost_by_activity(log)),
         ('Cost by Resources', get_cost_by_resource(log)),
         ('Average Arrival Time between Cases', f'{get_avg_arrival_time(log)} s'),
@@ -186,6 +201,7 @@ def write_output_file(log):
         ('Count for Activities', get_activity_count(log)),
         ('Resources', get_resources(log)),
         ('Total process duration', get_total_duration(log)),
+        ('Total process cost', f'{get_total_cost_process(log)} EUR'),
         ('Cost by Activity', get_cost_by_activity(log)),
         ('Cost by Resources', get_cost_by_resource(log)),
         ('Average Arrival Time between Cases', f'{get_avg_arrival_time(log)} s'),
